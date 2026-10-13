@@ -48,8 +48,10 @@ If you can't finish and have an open PR, either hand it off (7a) instead of rele
 - Another harness has an open PR for the same issue (a PR you picked up via `/claim-handoff` is yours to continue).
 
 ## 9. Identities
-- Each agent posts on GitHub as its own GitHub App (for example `valence-elsa4-lead-bot`, `valence-elsa4-qa-bot`), installed only on the repos it works in. Until an agent's app exists, it may post through the owner's account and must sign each comment with its role name.
-- Sign with your current role name (for example `[Training Lead]`, `[Integrations Lead]`), never a retired one.
+- Each agent posts on GitHub as its own GitHub App, installed only on the repos it works in. Its comments show the app's display name and the login `<app-slug>[bot]` (for example `elsa-4-qa[bot]`). See the table in section 10.
+- Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts, so the prefix isn't needed.
+- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`), never a retired one. The router ignores comments that start with a known role tag.
+- When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment, issue or PR as your app and passes `eyes_reaction.delete_url` in the payload. After posting your reply, delete that reaction and add 👍 as your app.
 - An app with read-only code access can't merge; merges then go through the owner's account under the rules in section 6.
 - Never print, share, or commit an app private key or routine key.
 
@@ -65,6 +67,38 @@ Mention an agent in an issue, PR, or review comment (training repo only for now;
 | `@vw-training` | Training Lead | `@vw-training-lead`, `@vw-training-engineer`, `@vw-training-curriculum`, `@vw-training-commercial`, `@vw-training-qa` |
 | `@vw-integrations` | Integrations Lead | `@vw-integrations-lead`, `@vw-integrations-engineer` |
 | `@vw-grok` | Grok (coordinator) | `@vw-architect` |
+
+### Who's who
+
+| Display name on GitHub | Bot login | Handle | Role |
+|---|---|---|---|
+| Elsa 4 Lead | `elsa-4-lead[bot]` | `@vw-elsa4`, `@vw-elsa4-lead` | Elsa 4 Crew lead |
+| Elsa 4 QA | `elsa-4-qa[bot]` | `@vw-elsa4-qa` | Elsa 4 docs and guide QA |
+| Elsa 4 UX | `elsa-4-ux[bot]` | `@vw-elsa4-ux` | Elsa 4 Studio UX |
+| Elsa 3 Lead | `elsa-3-lead[bot]` | `@vw-elsa3`, `@vw-elsa3-lead` | Elsa 3 Crew lead |
+| Elsa 3 Code Review | `elsa-3-code-review[bot]` | `@vw-elsa3-review` | Elsa 3 code review |
+| Elsa 3 Engineer | no app yet | `@vw-elsa3-engineer` | Elsa 3 engineering |
+| Elsa 3 QA | no app yet | `@vw-elsa3-qa` | Elsa 3 QA |
+| Elsa 3 Architect | no app yet | `@vw-elsa3-architect` | Elsa 3 architecture |
+| Elsa 3 Release | no app yet | `@vw-elsa3-release` | Elsa 3 releases |
+| Elsa 3 Triage | no app yet | `@vw-elsa3-triage` | Elsa 3 issue triage |
+| Elsa Control Lead | `elsa-control-lead[bot]` | `@vw-elsa-control`, `@vw-elsa-control-lead` | Elsa Control Crew lead |
+| Elsa Control Code Review | `elsa-control-code-review[bot]` | `@vw-elsa-control-review` | Elsa Control code review |
+| Elsa Control Architect | no app yet | `@vw-elsa-control-architect` | Elsa Control architecture |
+| Elsa Control QA | no app yet | `@vw-elsa-control-qa` | Elsa Control QA |
+| Elsa Control UX | no app yet | `@vw-elsa-control-ux` | Elsa Control UX |
+| Elsa Control Launch | no app yet | `@vw-elsa-control-launch` | Elsa Control launch |
+| Training Lead (Valence) | `training-lead-valence[bot]` | `@vw-training`, `@vw-training-lead` | Training Crew lead |
+| Training Engineer | no app yet | `@vw-training-engineer` | Training engineering |
+| Training QA | no app yet | `@vw-training-qa` | Training kit QA |
+| Training Curriculum | no app yet | `@vw-training-curriculum` | Training curriculum |
+| Training Commercial | no app yet | `@vw-training-commercial` | Training commercial |
+| Integrations Lead | `integrations-lead[bot]` | `@vw-integrations`, `@vw-integrations-lead` | Integrations Crew lead |
+| Integrations Engineer | no app yet | `@vw-integrations-engineer` | Integrations engineering |
+| Grok (Valence) | `grok-valence[bot]` | `@vw-grok` | Coordinator |
+| Architect (Valence) | `architect-valence[bot]` | `@vw-architect` | Cross-team architect |
+
+Shared team apps (`elsa-3-valence[bot]`, `elsa-control[bot]`, `training-valence[bot]`, `elsa-4-code-review[bot]`) have no handle of their own; mention the team handle instead.
 
 Old unprefixed handles were dropped on 13 Oct 2026 (several were real GitHub accounts). Always use the `vw-` prefix.
 
