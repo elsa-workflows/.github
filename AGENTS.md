@@ -1,63 +1,92 @@
 # AGENTS.md: org-wide protocol for AI agents
 
-This is the single source of the agent collaboration protocol for repositories in the `elsa-workflows` organisation, and for the `valence-works` repositories that adopt it. Each repository's own `AGENTS.md` links here and adds only repo-specific notes (build, structure, scope, labels). If a repo note conflicts with this file, this file wins unless the repo note names an explicit owner exception.
+This is the single agent protocol for repositories in the `elsa-workflows` organisation and the `valence-works` repositories that adopt it. Each repository's own `AGENTS.md` links here and adds only repo-specific notes (build, structure, scope). If a repo note conflicts with this file, this file wins unless the repo note names an explicit owner exception.
 
-You are one of several AI coding harnesses. GitHub issues and PRs are the only shared channel. Don't contact other harnesses directly. Your harness ID is one of: `grok-bot`, `codex`, `claude-code`, `gh-app-bot`, `cursor`.
+You are one of several AI coding agents. GitHub issues and PRs are the only shared channel. Don't contact other agents directly. Your worker name is one of `codex`, `claude`, `cursor`, or your app slug.
 
-## 1. Find work
-Open issues labelled `agent:ready` with no `agent:claimed-*` label, no `agent:blocked` or `agent:needs-human`, and no `harness-only:` label for another harness. Take the oldest S first, then M. Skip anything you can't verify end to end.
+## Issue Bus Lite
 
-## 2. Claim
-Comment `/claim <you> lease=24h`, add `agent:claimed-<you>`, remove `agent:ready`. If someone else's `/claim` is earlier, back off: comment `/release <you> reason=duplicate-claim` and remove your label. The lease lasts 24h from your last push, PR update, or `/heartbeat <you> <status>` comment.
+How agents find, claim and finish issues. Link here with `AGENTS.md#issue-bus-lite`.
 
-## 3. Branch
-`agent/<you>/<issue>-<slug>`, off the issue's target branch. Add the trailer `Agent-Harness: <you>` to each commit.
+### Labels
 
-## 4. Work
-- Do exactly what the objective and acceptance criteria say. Stay inside the constraints and out-of-scope list.
-- Never touch elsa-workflows/elsa-studio, elsa-extensions, or elsa-apps. Work for these goes to elsa-workflows/elsa-core.
-- No deploys, releases, publishing, tags, public posts, secrets, or workflow-permission changes.
-- **Prune:** remove what your change makes obsolete (dead code, stale tests, docs pointing at retired functionality), as listed in the issue's Pruning section. If nothing is obsolete, say why in the PR. The coordinator blocks merge without it.
-- Found extra work? Open a new issue with the agent-task form. Don't widen your PR.
+Every repo uses the same labels:
 
-## 5. Open the PR
-Open a **draft** PR early using the repo PR template: `Closes #N` (or `Refs #N` for a prune PR from a monthly cleanup sweep, which must not close the sweep issue), your harness, each AC mapped to evidence, test evidence, risks. Title: `<type>(<area>): <summary> (#N)`. Mark it ready and add `agent:in-review` only when all ACs have evidence and CI is green on the head commit.
+| Label | Colour | Meaning |
+|---|---|---|
+| `ready-for-agent` | `0E8A16` | Open for pickup |
+| `blocked` | `B60205` | Not pickable; see the `blocked:` comment |
+| `needs:decision` | `D93F0B` | Waiting on a maintainer decision; not pickable |
+| `worker:codex` | `5319E7` | Lane: Codex |
+| `worker:claude` | `8A63D2` | Lane: Claude |
+| `worker:cursor` | `1D76DB` | Lane: Cursor (launched by a dispatcher, never self-polled) |
+| `type:bug` | `D73A4A` | Something is broken |
+| `type:feature` | `A2EEEF` | New capability |
+| `type:docs` | `0075CA` | Documentation |
+| `type:chore` | `CFD3D7` | Maintenance, tooling, refactoring |
+| `type:question` | `D876E3` | Question, spike or discussion |
+| `size:S` | `C2E0C6` | Small |
+| `size:M` | `FEF2C0` | Medium |
+| `size:L` | `F9D0C4` | Large; consider splitting |
 
-## 6. Review and merge rules
-- An author never reviews, approves, or merges its own PR, or one it contributed to. Any harness that committed to a PR counts as an author.
-- Exactly one advisory reviewer per PR. Bugbot is advisory: only findings the Code Review agent adopts block.
-- Merge happens only through the coordinator, after a separate, non-author Code Review approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
+An issue without a `worker:*` label is open to any self-polling worker. Don't take an issue labelled for another lane.
 
-### Respond to review
-Feedback arrives as review threads and a coordinator `/route <you>` comment. Fix it in new commits (no force-push), reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, then comment `/ready <you>` and re-add `agent:in-review`. After 3 rounds the coordinator brings in a human.
+### Find work (oldest first)
 
-## 7. Release a claim
-If you can't finish and have an open PR, either hand it off (7a) instead of releasing, or close the PR (unmerged) first. To release, comment `/release <you> reason=<why + what you learned>`, remove your label, re-add `agent:ready`, and leave your branch for reference. If a decision is missing, use `/blocked <you> reason=...` or `/needs-human <you> question=...` instead.
+```text
+repo:<owner>/<repo> is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
+```
 
-## 7a. Hand off or pick up (credit-aware failover)
-- Running out of credits/quota/time with useful work done? Push everything, open a **draft PR** if none exists yet, post `/handoff <you>` with *Done so far, Next steps, Branch, PR, Open review threads, Blockers*, then swap `agent:claimed-<you>` for `agent:handoff`. Leave the PR open.
-- Picking up `agent:handoff`: comment `/claim-handoff <you> lease=24h`, swap the label for `agent:claimed-<you>`, continue on the **same branch and PR** from the latest note (don't restart), and add `Continued by <you> from <previous>` to the PR body.
-- Silent expiry: the coordinator writes the handoff note for you.
+Skip anything you can't verify end to end.
 
-## 8. Stop conditions: stop and comment instead of continuing if
-- The task needs an off-limits repo, a secret, a deploy, release, publish, or public post.
-- The ACs are contradictory or can't be tested.
+### Claim
+
+1. Comment exactly `claim: <worker> starting`.
+2. Re-read the comments. The earliest claim that hasn't been abandoned wins. If it isn't yours, comment `claim-abandoned` and stop.
+3. If you won, assign yourself and remove `ready-for-agent`. Assignment plus the missing label is the claim; there is no lease or board to update.
+
+### Work
+
+- One task per session and one PR per issue.
+- Branch `agent/<worker>/<issue>-<slug>` off the issue's target branch.
+- Do exactly what the issue's objective and acceptance criteria say, and stay inside its scope.
+- Never touch elsa-workflows/elsa-studio, elsa-extensions or elsa-apps. Work for these goes to elsa-workflows/elsa-core.
+- No deploys, releases, publishing, tags, public posts, secrets or workflow-permission changes.
+- Prune what your change makes obsolete (dead code, stale tests, docs for retired features), or say in the PR why nothing is.
+- Found extra work? Open a new issue. Don't widen your PR.
+
+### Open the PR
+
+Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue. Workers never merge.
+
+### Blocked or giving up
+
+Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is missing), and unassign yourself. Leave your branch and any draft PR for the next worker. To requeue, a maintainer removes `blocked` and re-adds `ready-for-agent`.
+
+## Review and merge rules
+- An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
+- Exactly one advisory reviewer per PR. Bugbot is advisory: only findings the code reviewer adopts block.
+- Merges are done only by the repo's Code Review app (for example `elsa-4-code-review[bot]`), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
+- Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. After 3 rounds, a human is brought in.
+
+## Stop conditions: stop and comment `blocked: <reason>` instead of continuing if
+- The task needs an off-limits repo, a secret, a deploy, release, publish or public post.
+- The acceptance criteria are contradictory or can't be tested.
 - Base-branch CI is already red for reasons unrelated to your change.
-- Your change would go beyond the issue's stated paths or scope.
+- Your change would go beyond the issue's stated scope.
 - You've failed the same check 3 times in a row.
-- Another harness has an open PR for the same issue (a PR you picked up via `/claim-handoff` is yours to continue).
+- Someone else already has an open PR for the issue.
 
-## 9. Identities
-- Each agent posts on GitHub as its own GitHub App, installed only on the repos it works in. Its comments show the app's display name and the login `<app-slug>[bot]` (for example `elsa-4-qa[bot]`). See the table in section 10.
-- Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts, so the prefix isn't needed.
-- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`), never a retired one. The router ignores comments that start with a known role tag.
-- When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment, issue or PR as your app and passes `eyes_reaction.delete_url` in the payload. After posting your reply, delete that reaction and add 👍 as your app.
-- An app with read-only code access can't merge; merges then go through the owner's account under the rules in section 6.
-- Never print, share, or commit an app private key or routine key.
+## Identities
+- Each agent posts on GitHub as its own GitHub App, installed only on the repos it works in. Its comments show the login `<app-slug>[bot]` (for example `elsa-4-qa[bot]`). See the table under Mentions.
+- Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts.
+- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag.
+- When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment as your app and passes `eyes_reaction.delete_url`. After replying, delete that reaction and add 👍 as your app.
+- Never print, share or commit an app private key or routine key.
 
-## 10. Mentions
+## Mentions
 
-Mention an agent in an issue, PR, or review comment (training repo only for now; only trusted humans, never bots). Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and copy (cc) its lead. Routing lives in Supabase `agent_router_config` (key `handles`), so it can be changed without a redeploy.
+Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. Only trusted humans trigger the router, never bots. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in Supabase `agent_router_config` (key `handles`), so it can change without a redeploy.
 
 | Team handle | Lead | Direct handles (lead is cc'd) |
 |---|---|---|
@@ -106,7 +135,7 @@ Internal agent ids are the agent name in UPPER_SNAKE (e.g. `ELSA_CONTROL_LEAD`, 
 
 Handles inside code spans or code blocks are ignored.
 
-## 11. Conduct
+## Conduct
 - No public posts (Discord, social, blog) and no contact with people outside the org on the owner's behalf.
 - Be plain and concise. Put evidence (commands, output, screenshots, SHAs) on the PR or issue being worked, not in new issues.
-- Escalate decisions to the owner briefly, through the coordinator, with `/needs-human`.
+- Escalate decisions to the owner briefly: add `needs:decision` and comment the question.
