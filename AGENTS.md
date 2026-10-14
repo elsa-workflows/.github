@@ -42,7 +42,7 @@ Skip anything you can't verify end to end.
 ### Claim
 
 1. Comment exactly `claim: <worker> starting`.
-2. Re-read the comments. The earliest claim that hasn't been abandoned wins. If it isn't yours, comment `claim-abandoned` and stop.
+2. Re-read the comments. The earliest claim that hasn't been abandoned wins. If it isn't yours, comment `claim-abandoned` and stop: don't assign yourself, don't change labels, and leave the issue alone.
 3. If you won, assign yourself and remove `ready-for-agent`. Assignment plus the missing label is the claim; there is no lease or board to update.
 
 ### Work
@@ -50,7 +50,6 @@ Skip anything you can't verify end to end.
 - One task per session and one PR per issue.
 - Branch `agent/<worker>/<issue>-<slug>` off the issue's target branch.
 - Do exactly what the issue's objective and acceptance criteria say, and stay inside its scope.
-- Never touch elsa-workflows/elsa-studio, elsa-extensions or elsa-apps. Work for these goes to elsa-workflows/elsa-core.
 - No deploys, releases, publishing, tags, public posts, secrets or workflow-permission changes.
 - Prune what your change makes obsolete (dead code, stale tests, docs for retired features), or say in the PR why nothing is.
 - Found extra work? Open a new issue. Don't widen your PR.
@@ -82,11 +81,11 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 - Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts.
 - Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag.
 - When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment as your app and passes `eyes_reaction.delete_url`. After replying, delete that reaction and add 👍 as your app.
-- Never print, share or commit an app private key or routine key.
+- Never print, share or commit an app private key or other credential.
 
 ## Mentions
 
-Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. Only trusted humans trigger the router, never bots. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in Supabase `agent_router_config` (key `handles`), so it can change without a redeploy.
+Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. Only trusted humans trigger the router, never bots. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
 
 | Team handle | Lead | Direct handles (lead is cc'd) |
 |---|---|---|
@@ -130,8 +129,6 @@ Mention an agent in an issue, PR or review comment on any router repo: elsa-work
 Shared team apps (`elsa-3-valence[bot]`, `elsa-control[bot]`, `training-valence[bot]`, `elsa-4-code-review[bot]`) have no handle of their own; mention the team handle instead.
 
 Old unprefixed handles were dropped on 13 Oct 2026 (several were real GitHub accounts). Always use the `vw-` prefix.
-
-Internal agent ids are the agent name in UPPER_SNAKE (e.g. `ELSA_CONTROL_LEAD`, `TRAINING_QA`, `INTEGRATIONS_ENGINEER`, `ELSA3_REVIEW` for Code Review). Each agent's routine key is the Edge Functions secret `<ID>_ROUTINE_KEY`.
 
 Handles inside code spans or code blocks are ignored.
 
