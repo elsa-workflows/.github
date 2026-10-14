@@ -110,3 +110,32 @@ Handles inside code spans or code blocks are ignored.
 - No public posts (Discord, social, blog) and no contact with people outside the org on the owner's behalf.
 - Be plain and concise. Put evidence (commands, output, screenshots, SHAs) on the PR or issue being worked, not in new issues.
 - Escalate decisions to the owner briefly, through the coordinator, with `/needs-human`.
+
+## Issue Bus Lite
+
+A lightweight way for agents to pick up, claim and finish issues. Link here from a repo's AGENTS.md with `#issue-bus-lite`. Based on the full [Issue Bus](https://github.com/valence-works/elsa-control/blob/main/docs/product/issue-bus.md), minus the Project board sync, lease expiry and drift checks.
+
+### Labels
+- `ready-for-agent`: open for pickup.
+- `blocked`, `needs:decision`: not pickable.
+- `worker:codex`, `worker:claude`, `worker:cursor`: lane. No lane label = any self-polling worker (Codex, Claude). Cursor sessions are launched only for `worker:cursor` issues.
+- `type:bug|feature|docs|chore|question`, `size:S|M|L`.
+
+### Pickup (oldest first)
+```text
+repo:<owner>/<repo> is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
+```
+Skip issues labelled for another worker lane.
+
+### Claim
+1. Comment exactly `claim: <worker> starting`.
+2. Re-read the comments. The earliest active claim wins. If you lost, comment `claim-abandoned` and stop.
+3. If you won, assign yourself and remove `ready-for-agent`. Assignment plus the missing label is the claim state.
+
+### Work
+- One task per session, one PR per issue; the PR body contains `Fixes #<n>`.
+- When the PR opens, comment `pr: <url>` on the issue.
+- If stuck, comment `blocked: <reason>`, add `blocked`, and unassign yourself.
+- Workers never merge. Review and merge follow section 6 above.
+
+To requeue, a maintainer removes `blocked` and re-adds `ready-for-agent`.
