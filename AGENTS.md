@@ -56,7 +56,7 @@ Skip anything you can't verify end to end.
 
 ### Open the PR
 
-Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue and request review by commenting `@elsa-bot review` on the PR. Workers never merge.
+Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue and request review by commenting `@elsa-workflows-bot review` on the PR. Workers never merge.
 
 ### Blocked or giving up
 
@@ -64,12 +64,15 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ## Review and merge rules
 - An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
-- Exactly one blocking reviewer per PR: the Code Review app. Other reviews (spec, standards, CodeRabbit, Bugbot) are advisory: only findings the code reviewer adopts block.
+- "Never self-merge" means an author never merges its own PR. The Code Review app merging someone else's PR after its own approval is the intended flow, not a self-merge.
+- Exactly one blocking reviewer per PR: the Code Review app. Other review tools (CodeRabbit, Copilot, Greptile, Bugbot) and other reviews (spec, standards) are advisory. The Code Review app always takes them into account, but the decision is its own: only findings it adopts block.
 - Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
-- Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. After 3 rounds, a human is brought in.
-- A repo's `AGENTS.md` may name owner exceptions. Example: elsa-foundation ADR 0080 D7 (runtime, persistence and public-rename PRs get the owner's merge after the app approves).
+- Review is a loop. If a round has actionable findings, they are fixed in new commits (no force-push), with `Fixed in <sha>` or `Won't fix: <reason>` on each thread, and once they are pushed the Code Review app reviews again.
+- Merge trigger: the Code Review app merges automatically when its review leaves no actionable findings, with green CI on the exact head commit. No human merge is needed.
+- At most 6 review rounds. If blocking issues remain after the sixth, the PR is escalated to the repo maintainer (Sipke): comment `blocked: review loop exhausted` and add `needs:decision`.
+- A repo's `AGENTS.md` may name owner exceptions. (elsa-foundation ADR 0080 D7's human-merge cases were dropped by owner decision on 15 Oct 2026; those PRs follow the loop above.)
 - An explicit instruction from the owner (Sipke) in an agent session counts as an exception for that one action only. Record it in the PR or release, for example `merged on Sipke's instruction`.
-- Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; they never self-merge.
+- Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; no author merges its own PR.
 
 ## Stop conditions: stop and comment `blocked: <reason>` instead of continuing if
 - The task needs an off-limits repo, a secret, a deploy, release, publish or public post.
@@ -81,16 +84,17 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ## Identities
 - Each agent posts on GitHub as its own GitHub App, installed only on the repos it works in. Its comments show the login `<app-slug>[bot]` (for example `elsa-4-qa[bot]`). See the table under Mentions.
-- Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts.
-- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag, except a review request (`@elsa-bot review`).
+- In elsa-workflows, Claude sessions post as `elsa-workflows-claude[bot]`, Codex sessions as `elsa-workflows-codex[bot]`, and the other agents as `elsa-workflows-bot[bot]`. Only Code Review posts as `elsa-workflows-review-bot[bot]`.
+- Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts, except a review request (`@elsa-workflows-bot review`) from one of these three author apps.
+- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag, except a review request (`@elsa-workflows-bot review`).
 - When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment as your app and passes `eyes_reaction.delete_url`. After replying, delete that reaction and add 👍 as your app.
 - Never print, share or commit an app private key or other credential.
 
 ## Mentions
 
-Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. Only trusted humans trigger the router, never bots. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
+Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, elsa-workflows/elsa-foundation-studio, elsa-workflows/elsa-foundation-designer, elsa-workflows/elsa-hub, elsa-workflows/elsa-blog, elsa-workflows/.github, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. A repo only routes once it has a webhook to the router; if a mention gets no 👀, tell the owner. Only trusted humans trigger the router, never bots (the one exception is an author app's review request). Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
 
-In `elsa-workflows`, use the single handle `@elsa-bot` (it reaches the repo's owning lead) and request review with `@elsa-bot review` (it reaches the Code Review agent). The `@vw-*` handles below are retired there and apply only in valence-works repos.
+In `elsa-workflows`, use the single handle `@elsa-workflows-bot` (it reaches the repo's owning lead) and request review with `@elsa-workflows-bot review` (it reaches the Code Review agent). The old `@elsa-bot` handle still routes for now but is deprecated, because it's someone else's GitHub account. The `@vw-*` handles below are retired there and apply only in valence-works repos.
 
 | Team handle | Lead | Direct handles (lead is cc'd) |
 |---|---|---|
@@ -105,11 +109,15 @@ In `elsa-workflows`, use the single handle `@elsa-bot` (it reaches the repo's ow
 
 | Display name on GitHub | Bot login | Handle | Role |
 |---|---|---|---|
+| Elsa Workflows Bot | `elsa-workflows-bot[bot]` | `@elsa-workflows-bot` | Grok agents in elsa-workflows (leads, engineers, QA) |
+| Elsa Workflows Review Bot | `elsa-workflows-review-bot[bot]` | `@elsa-workflows-bot review` | Code Review approvals and merges in elsa-workflows |
+| Elsa Workflows Claude | `elsa-workflows-claude[bot]` | none | Claude sessions on Sipke's laptop |
+| Elsa Workflows Codex | `elsa-workflows-codex[bot]` | none | Codex sessions |
 | Elsa 4 Lead | `elsa-4-lead[bot]` | `@vw-elsa4`, `@vw-elsa4-lead` | Elsa 4 Crew lead |
 | Elsa 4 QA | `elsa-4-qa[bot]` | `@vw-elsa4-qa` | Elsa 4 docs and guide QA |
 | Elsa 4 UX | `elsa-4-ux[bot]` | `@vw-elsa4-ux` | Elsa 4 Studio UX |
 | Elsa 3 Lead | `elsa-3-lead[bot]` | `@vw-elsa3`, `@vw-elsa3-lead` | Elsa 3 Crew lead |
-| Elsa 3 Code Review | `elsa-3-code-review[bot]` | `@vw-elsa3-review` | Elsa 3 code review |
+| Elsa 3 Code Review | `elsa-workflows-review-bot[bot]` (acts via Elsa Workflows Review Bot) | `@vw-elsa3-review`; in elsa-workflows, `@elsa-workflows-bot review` | Elsa 3 code review |
 | Elsa 3 Engineer | no app yet | `@vw-elsa3-engineer` | Elsa 3 engineering |
 | Elsa 3 QA | no app yet | `@vw-elsa3-qa` | Elsa 3 QA |
 | Elsa 3 Architect | no app yet | `@vw-elsa3-architect` | Elsa 3 architecture |
