@@ -37,13 +37,17 @@ An issue without a `worker:*` label is open to any self-polling worker. Don't ta
 repo:<owner>/<repo> is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
 ```
 
-Skip anything you can't verify end to end.
+Skip anything you can't verify end to end. Before claiming, read all issue comments (paginate), check for an active claim as defined below, and check for an open PR. `no:assignee` does not prove an issue is unclaimed: GitHub App workers do not use issue assignment.
 
 ### Claim
 
-1. Comment exactly `claim: <worker> starting`. If you post through the owner's account, your role tag may come first: `[Claude] claim: claude starting` is valid.
-2. Re-read the comments. The earliest claim that hasn't been abandoned wins. If it isn't yours, comment `claim-abandoned` and stop: don't assign yourself, don't change labels, and leave the issue alone.
-3. If you won, assign yourself and remove `ready-for-agent`. Assignment plus the missing label is the claim; there is no lease or board to update.
+1. Comment exactly `claim: <worker> starting` as your own GitHub App and retain the returned comment ID and URL. If posting through the owner's account is explicitly allowed for a worker with no app, its role tag may come first: `[Claude] claim: claude starting` is valid.
+2. Re-read all comments. The earliest active claim wins. Compare the winning **comment ID** with the ID you just posted, not just the author login: concurrent sessions can use the same app. If your new comment did not win, comment `claim-abandoned: <your-claim-comment-url>` and stop. Do not change labels or assignments, even when the winner uses your app.
+3. If you won, remove `ready-for-agent`. Re-read the issue and comments to verify that your specific claim still wins, the label is absent, no assignee has appeared, and no open PR already covers the issue before editing. If you cannot complete this step, follow the blocked steps below.
+
+The winning app-authored claim comment records ownership; removal of `ready-for-agent` takes the issue out of pickup. **Do not assign a GitHub App bot or the owner.** GitHub App bot logins are not ordinary assignable users, and assignment failure is not a reason to use a personal token. No assignment API, additional app permission, lease or project board is required. Existing human assignments still exclude an issue from pickup.
+
+A claim is active until its specific comment is released. Its author releases it with `claim-abandoned: <claim-comment-url>`; a maintainer may release it with `claim-released: <claim-comment-url>`. Only a release by that claim's author or a maintainer counts. A release of a losing claim never releases the winning claim. For old comments, a bare `claim-abandoned` releases only that author's most recent preceding claim. Use the URL form for all new releases. Claims never expire automatically.
 
 ### Work
 
@@ -60,7 +64,9 @@ Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to eviden
 
 ### Blocked or giving up
 
-Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is missing), and unassign yourself. Leave your branch and any draft PR for the next worker. To requeue, a maintainer removes `blocked` and re-adds `ready-for-agent`.
+Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is missing), remove `ready-for-agent` if present, and release your specific claim with `claim-abandoned: <your-claim-comment-url>`. Remove an assignment only if it is your own existing user assignment; app workers need no assignment call. Leave your branch and any draft PR for the next worker.
+
+To requeue, a maintainer first releases any remaining active claim with `claim-released: <claim-comment-url>`, checks that no open PR already covers the issue, removes the blocking label, and re-adds `ready-for-agent`. This also applies to claims left blocked under the former mandatory-assignment rule; a `blocked:` comment alone does not identify which claim to release. Workers do not requeue themselves.
 
 ### Scheduled pickup routine
 
@@ -76,11 +82,11 @@ You are the <worker> worker for the owner's Elsa projects. Run one task, then st
 3. Check your own open PRs first: `is:pr is:open org:<org> author:app/<your app slug for that org>`, once per org you have an app in. If one or more have unaddressed review findings or a red required check, handle the oldest one only: fix it in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, re-request review as that repo's AGENTS.md says, then stop.
 4. Otherwise find work, oldest first, across both orgs:
    org:elsa-workflows org:valence-works is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
-   Skip issues outside the scope in step 2, issues labelled for another worker lane, issues that already have an open PR, and anything that hits a stop condition.
+   Skip issues outside the scope in step 2, issues labelled for another worker lane, issues with an active claim or an open PR, and anything that hits a stop condition. Read all comments; no:assignee does not imply no claim.
 5. If nothing qualifies, stop without posting anything.
-6. Otherwise claim exactly one issue: comment `claim: <worker> starting`, re-read, and back off with `claim-abandoned` if someone claimed first. Then assign yourself and remove ready-for-agent.
+6. Otherwise claim exactly one issue using the Claim section above: post as your app, retain your new comment ID and URL, re-read, and compare comment IDs. If your claim loses, release only that claim with `claim-abandoned: <your-claim-comment-url>` and stop without changing labels or assignments. If it wins, remove ready-for-agent and verify ownership before editing. Never assign a bot or the owner, and never fall back to a personal token.
 7. Work on branch agent/<worker>/<issue>-<slug>, open one PR with `Fixes #<n>` and each acceptance criterion mapped to evidence, comment `pr: <url>` on the issue, and request review the way that repo's AGENTS.md says (in elsa-workflows: `@elsa-workflows-bot review`). Never merge.
-8. If you get stuck, follow the blocked steps (comment, label, unassign) and stop.
+8. If you get stuck, follow the blocked steps (comment, label, release your specific claim; remove only your own existing user assignment, if any) and stop.
 
 Finish with a three-line summary: the issue or PR, what you did, and its state.
 ```
