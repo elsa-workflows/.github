@@ -64,10 +64,10 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ## Review and merge rules
 - An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
-- Exactly one blocking reviewer per PR: the Code Review app. Other reviews (spec, standards, CodeRabbit, Bugbot) are advisory: only findings the code reviewer adopts block.
-- Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
-- Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. After 3 rounds, a human is brought in.
-- A repo's `AGENTS.md` may name owner exceptions. Example: elsa-foundation ADR 0080 D7 (runtime, persistence and public-rename PRs get the owner's merge after the app approves).
+- Exactly one blocking reviewer per PR: the Code Review app. Other reviews (spec, standards, CodeRabbit, Copilot, Greptile, Bugbot) are advisory: the Code Review app weighs them, but the decision is its own, and only findings it adopts block.
+- Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI. It merges automatically once its review finds nothing actionable. New commits after an approval need a fresh approval.
+- Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. Review is a loop: findings are fixed and pushed, then re-reviewed, for up to 6 rounds. If blocking issues remain after that, the PR is escalated to the owner (Sipke).
+- Automatic merge covers every PR, including runtime, persistence and public-rename PRs (elsa-foundation ADR 0080 D7 no longer needs the owner's merge). A repo's `AGENTS.md` may still name other owner exceptions.
 - An explicit instruction from the owner (Sipke) in an agent session counts as an exception for that one action only. Record it in the PR or release, for example `merged on Sipke's instruction`.
 - Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; they never self-merge.
 
