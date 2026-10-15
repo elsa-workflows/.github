@@ -62,6 +62,26 @@ Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to eviden
 
 Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is missing), and unassign yourself. Leave your branch and any draft PR for the next worker. To requeue, a maintainer removes `blocked` and re-adds `ready-for-agent`.
 
+### Scheduled pickup routine
+
+Self-polling workers (for example Claude and Codex on the maintainer's machine) run this as a scheduled routine, every one to two hours, locally so they post as their own app. Replace `<worker>` with the worker name (`claude`, `codex`, ...).
+
+```text
+You are the <worker> worker for Sipke's Elsa projects. Run one pickup cycle, then stop.
+
+1. Read the "Issue Bus Lite" section of https://github.com/elsa-workflows/.github/blob/main/AGENTS.md and follow it exactly. It wins over anything below. Also follow the target repo's own AGENTS.md.
+2. First, handle review findings on your own open PRs (author:<your app>): fix them in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, and re-request review with `@elsa-workflows-bot review`. If any PR needed work, do that instead of claiming a new issue, then stop.
+3. Find work, oldest first, in elsa-workflows/elsa-core, elsa-foundation, elsa-foundation-studio, elsa-foundation-designer, elsa-hub and elsa-blog:
+   is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
+   Skip issues labelled for another worker lane, issues that already have an open PR, anything that needs a secret, deploy, release, publish or public post, and anything in elsa-studio, elsa-extensions, elsa-apps or valence-works/groundwork.
+4. If nothing qualifies, stop without posting anything.
+5. Otherwise claim exactly one issue: comment `claim: <worker> starting`, re-read, and back off with `claim-abandoned` if someone claimed first. Then assign yourself and remove ready-for-agent.
+6. Work on branch agent/<worker>/<issue>-<slug>, open one PR with `Fixes #<n>` and each acceptance criterion mapped to evidence, comment `pr: <url>` on the issue, and request review with `@elsa-workflows-bot review` on the PR. Never merge.
+7. If you get stuck, follow the blocked steps (comment, label, unassign) and stop.
+
+Post only as your own GitHub App, never as Sipke. Finish with a three-line summary: the issue, the PR, and its state.
+```
+
 ## Review and merge rules
 - An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
 - "Never self-merge" means an author never merges its own PR. The Code Review app merging someone else's PR after its own approval is the intended flow, not a self-merge.
