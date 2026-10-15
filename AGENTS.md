@@ -64,22 +64,22 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ### Scheduled pickup routine
 
-Self-polling workers (for example Claude and Codex on the maintainer's machine) run this as a scheduled routine, every one to two hours, locally so they post as their own app. Replace `<worker>` with the worker name (`claude`, `codex`, ...).
+Self-polling workers (for example Claude and Codex on the owner's machine) run this as a scheduled routine, every one to two hours, locally so they post as their own app. Replace `<worker>` with the worker name (`claude`, `codex`, ...) and `<app-slug>` with its GitHub App slug (`elsa-workflows-claude`, `elsa-workflows-codex`, ...).
 
 ```text
-You are the <worker> worker for Sipke's Elsa projects. Run one pickup cycle, then stop.
+You are the <worker> worker for the owner's Elsa projects. Run one task, then stop.
 
-1. Read the "Issue Bus Lite" section of https://github.com/elsa-workflows/.github/blob/main/AGENTS.md and follow it exactly. It wins over anything below. Also follow the target repo's own AGENTS.md.
-2. First, handle review findings on your own open PRs (author:<your app>): fix them in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, and re-request review with `@elsa-workflows-bot review`. If any PR needed work, do that instead of claiming a new issue, then stop.
-3. Find work, oldest first, in elsa-workflows/elsa-core, elsa-foundation, elsa-foundation-studio, elsa-foundation-designer, elsa-hub and elsa-blog:
+1. Read https://github.com/elsa-workflows/.github/blob/main/AGENTS.md#issue-bus-lite and the rest of that file, and follow it exactly. It wins over anything below. Also follow the target repo's own AGENTS.md.
+2. Check your own open PRs first: `is:pr is:open author:app/<app-slug>` in the elsa-workflows org. If one or more have unaddressed review findings or a red required check, handle the oldest one only: fix it in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, re-request review with `@elsa-workflows-bot review`, then stop.
+3. Otherwise find work, oldest first, in the elsa-workflows router repos listed under Mentions in that file (excluding `.github`):
    is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
-   Skip issues labelled for another worker lane, issues that already have an open PR, anything that needs a secret, deploy, release, publish or public post, and anything in elsa-studio, elsa-extensions, elsa-apps or valence-works/groundwork.
+   Skip issues labelled for another worker lane, issues that already have an open PR, and anything that hits a stop condition (including the off-limits repos listed there).
 4. If nothing qualifies, stop without posting anything.
 5. Otherwise claim exactly one issue: comment `claim: <worker> starting`, re-read, and back off with `claim-abandoned` if someone claimed first. Then assign yourself and remove ready-for-agent.
 6. Work on branch agent/<worker>/<issue>-<slug>, open one PR with `Fixes #<n>` and each acceptance criterion mapped to evidence, comment `pr: <url>` on the issue, and request review with `@elsa-workflows-bot review` on the PR. Never merge.
 7. If you get stuck, follow the blocked steps (comment, label, unassign) and stop.
 
-Post only as your own GitHub App, never as Sipke. Finish with a three-line summary: the issue, the PR, and its state.
+Post only as your own GitHub App, never as the owner. Finish with a three-line summary: the issue or PR, what you did, and its state.
 ```
 
 ## Review and merge rules
@@ -95,7 +95,7 @@ Post only as your own GitHub App, never as Sipke. Finish with a three-line summa
 - Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; no author merges its own PR.
 
 ## Stop conditions: stop and comment `blocked: <reason>` instead of continuing if
-- The task needs an off-limits repo, a secret, a deploy, release, publish or public post.
+- The task needs an off-limits repo, a secret, a deploy, release, publish or public post. Off-limits repos: elsa-workflows/elsa-studio, elsa-extensions, elsa-apps and elsa-templates (folded into elsa-core), and valence-works/groundwork (not in use). Do not open issues or PRs there either.
 - The acceptance criteria are contradictory or can't be tested.
 - Required checks on the base branch are already red for reasons unrelated to your change. Non-required suites don't count.
 - Your change would go beyond the issue's stated scope.
