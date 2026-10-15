@@ -64,22 +64,25 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ### Scheduled pickup routine
 
-Self-polling workers (for example Claude and Codex on the owner's machine) run this as a scheduled routine, every one to two hours, locally so they post as their own app. Replace `<worker>` with the worker name (`claude`, `codex`, ...) and `<app-slug>` with its GitHub App slug (`elsa-workflows-claude`, `elsa-workflows-codex`, ...).
+Self-polling workers (for example Claude and Codex on the owner's machine) run this as one scheduled routine per worker, every one to two hours, locally so they post as their own app. One routine covers every repo in both orgs; there is no routine per repo. Replace `<worker>` with the worker name (`claude`, `codex`, ...).
+
+A repo takes part when its own AGENTS.md links to Issue Bus Lite. In each org a worker posts as its own GitHub App for that org; if it has no app in an org, it skips that org.
 
 ```text
 You are the <worker> worker for the owner's Elsa projects. Run one task, then stop.
 
 1. Read https://github.com/elsa-workflows/.github/blob/main/AGENTS.md#issue-bus-lite and the rest of that file, and follow it exactly. It wins over anything below. Also follow the target repo's own AGENTS.md.
-2. Check your own open PRs first: `is:pr is:open author:app/<app-slug>` in the elsa-workflows org. If one or more have unaddressed review findings or a red required check, handle the oldest one only: fix it in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, re-request review with `@elsa-workflows-bot review`, then stop.
-3. Otherwise find work, oldest first, in the elsa-workflows router repos listed under Mentions in that file (excluding `.github`):
-   is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
-   Skip issues labelled for another worker lane, issues that already have an open PR, and anything that hits a stop condition (including the off-limits repos listed there).
-4. If nothing qualifies, stop without posting anything.
-5. Otherwise claim exactly one issue: comment `claim: <worker> starting`, re-read, and back off with `claim-abandoned` if someone claimed first. Then assign yourself and remove ready-for-agent.
-6. Work on branch agent/<worker>/<issue>-<slug>, open one PR with `Fixes #<n>` and each acceptance criterion mapped to evidence, comment `pr: <url>` on the issue, and request review with `@elsa-workflows-bot review` on the PR. Never merge.
-7. If you get stuck, follow the blocked steps (comment, label, unassign) and stop.
+2. Scope: the GitHub orgs elsa-workflows and valence-works. Only work in a repo whose own AGENTS.md links to Issue Bus Lite, and never in an off-limits repo (see Stop conditions). In each org, post only as your own GitHub App for that org (see Identities); if you have none there, skip that org. Never post as the owner.
+3. Check your own open PRs first: `is:pr is:open org:elsa-workflows org:valence-works author:app/<your app slug>` (one search per app). If one or more have unaddressed review findings or a red required check, handle the oldest one only: fix it in new commits, reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread, re-request review as that repo's AGENTS.md says, then stop.
+4. Otherwise find work, oldest first, across both orgs:
+   org:elsa-workflows org:valence-works is:issue is:open no:assignee label:ready-for-agent -label:blocked -label:"needs:decision" sort:created-asc
+   Skip issues outside the scope in step 2, issues labelled for another worker lane, issues that already have an open PR, and anything that hits a stop condition.
+5. If nothing qualifies, stop without posting anything.
+6. Otherwise claim exactly one issue: comment `claim: <worker> starting`, re-read, and back off with `claim-abandoned` if someone claimed first. Then assign yourself and remove ready-for-agent.
+7. Work on branch agent/<worker>/<issue>-<slug>, open one PR with `Fixes #<n>` and each acceptance criterion mapped to evidence, comment `pr: <url>` on the issue, and request review the way that repo's AGENTS.md says (in elsa-workflows: `@elsa-workflows-bot review`). Never merge.
+8. If you get stuck, follow the blocked steps (comment, label, unassign) and stop.
 
-Post only as your own GitHub App, never as the owner. Finish with a three-line summary: the issue or PR, what you did, and its state.
+Finish with a three-line summary: the issue or PR, what you did, and its state.
 ```
 
 ## Review and merge rules
@@ -95,7 +98,7 @@ Post only as your own GitHub App, never as the owner. Finish with a three-line s
 - Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; no author merges its own PR.
 
 ## Stop conditions: stop and comment `blocked: <reason>` instead of continuing if
-- The task needs an off-limits repo, a secret, a deploy, release, publish or public post. Off-limits repos: elsa-workflows/elsa-studio, elsa-extensions, elsa-apps and elsa-templates (folded into elsa-core), and valence-works/groundwork (not in use). Do not open issues or PRs there either.
+- The task needs an off-limits repo, a secret, a deploy, release, publish or public post. Off-limits repos: elsa-workflows/elsa-studio, elsa-extensions, elsa-apps and elsa-templates (folded into elsa-core), and valence-works/groundwork (not in use). Do not open issues or PRs there either. Off-limits repos: elsa-workflows/elsa-studio, elsa-extensions, elsa-apps and elsa-templates (folded into elsa-core), and valence-works/groundwork (not in use). Do not open issues or PRs there either.
 - The acceptance criteria are contradictory or can't be tested.
 - Required checks on the base branch are already red for reasons unrelated to your change. Non-required suites don't count.
 - Your change would go beyond the issue's stated scope.
