@@ -11,12 +11,12 @@ configuration:
          codeLines: 1
       bypassUsers:
          - copilot[bot]
-        - elsa-workflows-bot[bot]
-        - elsa-workflows-claude[bot]
-        - elsa-workflows-codex[bot]
-        - elsa-workflows-review-bot[bot]
-        - elsa-4-ux[bot]
-        - elsa-4-qa[bot]
+         - elsa-workflows-bot[bot]
+         - elsa-workflows-claude[bot]
+         - elsa-workflows-codex[bot]
+         - elsa-workflows-review-bot[bot]
+         - elsa-4-ux[bot]
+         - elsa-4-qa[bot]
          - dependabot[bot]
          - greenkeeper[bot]
          - dotnet-maestro[bot]
