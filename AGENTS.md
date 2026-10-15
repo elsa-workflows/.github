@@ -41,13 +41,13 @@ Skip anything you can't verify end to end.
 
 ### Claim
 
-1. Comment exactly `claim: <worker> starting`.
+1. Comment exactly `claim: <worker> starting`. If you post through the owner's account, your role tag may come first: `[Claude] claim: claude starting` is valid.
 2. Re-read the comments. The earliest claim that hasn't been abandoned wins. If it isn't yours, comment `claim-abandoned` and stop: don't assign yourself, don't change labels, and leave the issue alone.
 3. If you won, assign yourself and remove `ready-for-agent`. Assignment plus the missing label is the claim; there is no lease or board to update.
 
 ### Work
 
-- One task per session and one PR per issue.
+- One task per worker session and one PR per issue. A coordinator session that dispatches issues to separate worker sessions is fine.
 - Branch `agent/<worker>/<issue>-<slug>` off the issue's target branch.
 - Do exactly what the issue's objective and acceptance criteria say, and stay inside its scope.
 - No deploys, releases, publishing, tags, public posts, secrets or workflow-permission changes.
@@ -56,7 +56,7 @@ Skip anything you can't verify end to end.
 
 ### Open the PR
 
-Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue. Workers never merge.
+Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue and request review by commenting `@elsa-bot review` on the PR. Workers never merge.
 
 ### Blocked or giving up
 
@@ -64,14 +64,17 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ## Review and merge rules
 - An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
-- Exactly one advisory reviewer per PR. Bugbot is advisory: only findings the code reviewer adopts block.
-- Merges are done only by the repo's Code Review app (for example `elsa-4-code-review[bot]`), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
+- Exactly one blocking reviewer per PR: the Code Review app. Other reviews (spec, standards, CodeRabbit, Bugbot) are advisory: only findings the code reviewer adopts block.
+- Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
 - Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. After 3 rounds, a human is brought in.
+- A repo's `AGENTS.md` may name owner exceptions. Example: elsa-foundation ADR 0080 D7 (runtime, persistence and public-rename PRs get the owner's merge after the app approves).
+- An explicit instruction from the owner (Sipke) in an agent session counts as an exception for that one action only. Record it in the PR or release, for example `merged on Sipke's instruction`.
+- Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; they never self-merge.
 
 ## Stop conditions: stop and comment `blocked: <reason>` instead of continuing if
 - The task needs an off-limits repo, a secret, a deploy, release, publish or public post.
 - The acceptance criteria are contradictory or can't be tested.
-- Base-branch CI is already red for reasons unrelated to your change.
+- Required checks on the base branch are already red for reasons unrelated to your change. Non-required suites don't count.
 - Your change would go beyond the issue's stated scope.
 - You've failed the same check 3 times in a row.
 - Someone else already has an open PR for the issue.
@@ -79,13 +82,15 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 ## Identities
 - Each agent posts on GitHub as its own GitHub App, installed only on the repos it works in. Its comments show the login `<app-slug>[bot]` (for example `elsa-4-qa[bot]`). See the table under Mentions.
 - Posting as your app: no `[Role]` prefix. The mention router ignores comments by bot accounts.
-- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag.
+- Until an agent's app exists, it may post through the owner's account and must start each comment with its current role name (for example `[Training Engineer]`). The router ignores comments that start with a known role tag, except a review request (`@elsa-bot review`).
 - When the router wakes you for a mention and your app can react there, it adds 👀 to the triggering comment as your app and passes `eyes_reaction.delete_url`. After replying, delete that reaction and add 👍 as your app.
 - Never print, share or commit an app private key or other credential.
 
 ## Mentions
 
 Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. Only trusted humans trigger the router, never bots. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
+
+In `elsa-workflows`, use the single handle `@elsa-bot` (it reaches the repo's owning lead) and request review with `@elsa-bot review` (it reaches the Code Review agent). The `@vw-*` handles below are retired there and apply only in valence-works repos.
 
 | Team handle | Lead | Direct handles (lead is cc'd) |
 |---|---|---|
