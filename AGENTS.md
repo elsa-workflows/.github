@@ -64,10 +64,12 @@ Comment `blocked: <reason>`, add `blocked` (or `needs:decision` if a decision is
 
 ## Review and merge rules
 - An author never reviews, approves or merges its own PR, or one it contributed to. Anyone who committed to a PR counts as an author.
-- Exactly one blocking reviewer per PR: the Code Review app. Other reviews (spec, standards, CodeRabbit, Bugbot) are advisory: only findings the code reviewer adopts block.
+- Exactly one blocking reviewer per PR: the Code Review app. Other review tools (CodeRabbit, Copilot, Greptile, Bugbot) and other reviews (spec, standards) are advisory. The Code Review app always takes them into account, but the decision is its own: only findings it adopts block.
 - Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI. New commits after an approval need a fresh approval.
-- Fix review feedback in new commits (no force-push) and reply `Fixed in <sha>` or `Won't fix: <reason>` on each thread. After 3 rounds, a human is brought in.
-- A repo's `AGENTS.md` may name owner exceptions. Example: elsa-foundation ADR 0080 D7 (runtime, persistence and public-rename PRs get the owner's merge after the app approves).
+- Review is a loop. If a round has actionable findings, they are fixed in new commits (no force-push), with `Fixed in <sha>` or `Won't fix: <reason>` on each thread, and once they are pushed the Code Review app reviews again.
+- Merge trigger: the Code Review app merges automatically when its review leaves no actionable findings, with green CI on the exact head commit. No human merge is needed.
+- At most 6 review rounds. If blocking issues remain after the sixth, the PR is escalated to the repo maintainer (Sipke): comment `blocked: review loop exhausted` and add `needs:decision`.
+- A repo's `AGENTS.md` may name owner exceptions. (elsa-foundation ADR 0080 D7's human-merge cases were dropped by owner decision on 15 Oct 2026; those PRs follow the loop above.)
 - An explicit instruction from the owner (Sipke) in an agent session counts as an exception for that one action only. Record it in the PR or release, for example `merged on Sipke's instruction`.
 - Fallback: if the Code Review agent is unavailable (for example credits run out, or an outage), a maintainer (Sipke) may approve and merge manually. Agents pause and wait; they never self-merge.
 
