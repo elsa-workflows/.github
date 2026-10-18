@@ -62,7 +62,7 @@ A valid claim is active until its specific comment is released. Its author relea
 
 ### Open the PR
 
-Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue and request review by commenting `@elsa-workflows-bot review` on the PR. Workers never merge, except as Outages allows.
+Put `Fixes #<n>` in the PR body, with each acceptance criterion mapped to evidence. Then comment `pr: <url>` on the issue and request review by commenting `@elsa-workflows-bot review` on the PR. Workers never merge, except as Standing self-merge or Outages allows.
 
 ### Blocked or giving up
 
@@ -94,16 +94,38 @@ Finish with a three-line summary: the issue or PR, what you did, and its state.
 ```
 
 ## Review and merge rules
-- An author never reviews, approves or merges its own PR, or one it contributed to, except as Outages allows. Anyone who committed to a PR counts as an author.
-- "Never self-merge" means an author never merges its own PR, except as Outages allows. The Code Review app merging someone else's PR after its own approval is the intended flow, not a self-merge.
+- An author never reviews, approves or merges its own PR, or one it contributed to, except as Standing self-merge or Outages allows. Anyone who committed to a PR counts as an author.
+- "Never self-merge" means an author never merges its own PR, except as Standing self-merge or Outages allows. The Code Review app merging someone else's PR after its own approval is the intended flow, not a self-merge.
 - Exactly one blocking reviewer per PR: the Code Review app. Other review tools (CodeRabbit, Copilot, Greptile, Bugbot) and other reviews (spec, standards) are advisory. The Code Review app always takes them into account, but the decision is its own: only findings it adopts block.
-- Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI, except as Outages allows. New commits after an approval need a fresh approval.
+- Merges are done only by the repo's Code Review app (in elsa-workflows, `elsa-workflows-review-bot[bot]`, for every repo), after a separate, non-author approval on the **exact head commit** and green CI, except as Standing self-merge or Outages allows. New commits after an approval need a fresh approval.
 - Review is a loop. If a round has actionable findings, they are fixed in new commits (no force-push), with `Fixed in <sha>` or `Won't fix: <reason>` on each thread, and once they are pushed the Code Review app reviews again.
 - Merge trigger: the Code Review app merges automatically when its review leaves no actionable findings, with green CI on the exact head commit. No human merge is needed.
 - At most 6 review rounds. If blocking issues remain after the sixth, the PR is escalated to the repo maintainer (Sipke): comment `blocked: review loop exhausted` and add `needs:decision`.
 - A repo's `AGENTS.md` may name owner exceptions. (elsa-foundation ADR 0080 D7's human-merge cases were dropped by owner decision on 15 Oct 2026; those PRs follow the loop above.)
 - An explicit instruction from the owner (Sipke) in an agent session counts as an exception for that one action only. Record it in the PR or release, for example `merged on Sipke's instruction`.
-- Fallback: if the Code Review app is unavailable (for example credits run out), Sipke declares an outage and authors self-merge as Outages describes. Sipke may still approve and merge manually.
+- Codex and Claude may self-merge their own PRs at any time after a clean self-review loop; see Standing self-merge.
+- Fallback for other authors: if the Code Review app is unavailable (for example credits run out), Sipke declares an outage and authors self-merge as Outages describes. Sipke may still approve and merge manually.
+
+## Standing self-merge (Codex and Claude)
+
+Owner decision, 18 Oct 2026: in `elsa-workflows`, the Codex and Claude workers (`elsa-workflows-codex[bot]`, `elsa-workflows-claude[bot]`) may always merge their own PRs after a clean self-review loop. Review by the Code Review app is optional for these PRs: it is welcome, but the author does not wait for it. This keeps work moving when review agents are out of credits. It needs no outage issue and applies in any session of those two workers. It covered Codex's merge of elsa-foundation#2863. Post only as your own GitHub App, never through the owner's account.
+
+1. Self-review loop: review the PR's diff the way steps 1 to 3 of [Self-merge while Code Review is offline](#self-merge-while-code-review-is-offline) describe, including a round comment after each round. Fix actionable findings in new commits and review again, until a round finds nothing actionable. At most 6 rounds; if blockers remain after the sixth, comment `blocked: review loop exhausted`, add `needs:decision` and escalate to Sipke.
+2. Checks: required checks must be green on the latest head commit, and that commit must be the one the final round reviewed. A pending check that is not required, such as `license/cla`, does not block. The other conditions of step 4 and step 5 of that section also apply: no merge over a human hold, a changes-requested review or a `blocked`/`needs:decision` label, and never bypass branch protection.
+3. Audit trail: before merging, add the label `self-merged` to the PR (create it in the repo if it is missing, colour `5319E7`) and post this PR comment:
+
+   ```text
+   Self-merge (standing authorization, Oct 18 2026)
+
+   Rounds run: <n> (<round comment links>)
+   Findings fixed: <finding: sha>, ...  (or "none")
+   Remaining Low notes: <note>, ...  (or "none")
+   Reviewed head SHA: <sha>
+   ```
+
+   Then merge and write `self-merged under standing authorization: <comment url>` in the merge commit. This comment replaces ad-hoc wording such as "merge authorized on Sipke's instruction".
+4. Follow-up: leads read `self-merged` PRs and file follow-up issues for anything they want changed. No retroactive review is required.
+5. The review router ignores `@elsa-workflows-bot review` on PRs that are merged, closed or labelled `self-merged`, so a late review request does not start a review.
 
 ## Outages
 
@@ -154,7 +176,7 @@ While an outage issue lists a worker, another worker may take over its in-flight
 
 ## Mentions
 
-Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, elsa-workflows/elsa-foundation-studio, elsa-workflows/elsa-foundation-designer, elsa-workflows/elsa-hub, elsa-workflows/elsa-blog, elsa-workflows/.github, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. A repo only routes once it has a webhook to the router; if a mention gets no 👀, tell the owner. Only trusted humans trigger the router, never bots (the one exception is an author app's review request). Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
+Mention an agent in an issue, PR or review comment on any router repo: elsa-workflows/elsa-core, elsa-workflows/elsa-foundation, elsa-workflows/elsa-foundation-studio, elsa-workflows/elsa-foundation-designer, elsa-workflows/elsa-hub, elsa-workflows/elsa-blog, elsa-workflows/.github, valence-works/bpmn, valence-works/elsa-control and valence-works/elsa-plus-training. A repo only routes once it has a webhook to the router; if a mention gets no 👀, tell the owner. Only trusted humans trigger the router, never bots (the one exception is an author app's review request). The router skips review requests on PRs that are merged, closed or labelled `self-merged`. Team handles go to the team lead, who decides who handles it. Direct handles go to that agent and cc its lead. Routing lives in the router configuration, so it can change without a redeploy.
 
 In `elsa-workflows`, use the single handle `@elsa-workflows-bot` (it reaches the repo's owning lead) and request review with `@elsa-workflows-bot review` (it reaches the Code Review agent). The old `@elsa-bot` handle still routes for now but is deprecated, because it's someone else's GitHub account. The `@vw-*` handles below are retired there and apply only in valence-works repos.
 
