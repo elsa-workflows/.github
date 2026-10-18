@@ -129,7 +129,7 @@ Owner decision, 18 Oct 2026: in `elsa-workflows`, the Codex and Claude workers (
 
 ## Outages
 
-Use this section only while an outage is declared, and only in sessions Sipke starts: scheduled routines never self-merge or take over work. It overrides the claim, lane, branch, review and merge rules above where they conflict, and nothing else.
+Use this section only while an outage is declared, and only in sessions Sipke starts: scheduled routines never self-merge or take over work. It overrides the claim, lane, branch, review and merge rules above where they conflict, and nothing else. Outages does not restrict Standing self-merge.
 
 ### Declaring an outage
 
